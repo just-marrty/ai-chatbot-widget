@@ -1,0 +1,183 @@
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<div id="chat-container">
+    <h1>AI Assistant Ava</h1>
+    <div id="messages"></div>
+    <div id="input-container">
+        <textarea id="user-input" placeholder="Type your message here..." rows="1"></textarea>
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+<style>
+    #chat-container {
+        font-family: "Roboto Mono", monospace;
+        background: #f5ffee;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    #chat-container h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #1e1e1e;
+        font-size: 24px;
+    }
+
+    #messages {
+        height: 400px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        padding: 10px;
+        border: 2px solid #dcead2;
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        background-color: #f5ffee;
+    }
+
+    .message {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 5px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+
+    .user {
+        background-color: #faae77;
+        color: white;
+        align-self: flex-end;
+    }
+
+    .assistant {
+        background-color: #ffe7d6;
+        color: #1e1e1e;
+        align-self: flex-start;
+    }
+
+    #input-container {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    #user-input {
+        flex: 1;
+        padding: 11px 10px;
+        border-radius: 5px;
+        border: 2px solid #ffe7d6;
+        font-size: 16px;
+        background-color: #f5ffee;
+        font-family: "Roboto Mono", monospace;
+        caret-color: #faae77;
+        resize: none;
+        overflow-y: hidden;
+        height: 44px;
+        max-height: 150px;
+        line-height: 1.4;
+        box-sizing: border-box;
+    }
+
+    #user-input::placeholder {
+        font-family: "Roboto Mono", monospace;
+        color: #999;
+    }
+
+    #user-input:focus {
+        outline: none;
+        border-color: #faae77;
+    }
+
+    #send-btn {
+        padding: 10px 20px;
+        border: none;
+        background-color: #faae77;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-family: "Roboto Mono", monospace;
+        height: 44px;
+    }
+
+    #send-btn:hover {
+        background-color: #ffc093;
+    }
+
+    #send-btn:disabled {
+        background-color: #ffe7d6;
+        cursor: not-allowed;
+    }
+</style>
+
+<script>
+    const API_URL = "http://localhost:8000/chat";
+
+    const messagesDiv = document.getElementById("messages");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+
+    userInput.style.height = '44px';
+
+    function addMessage(content, isUser) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+        messageDiv.textContent = content;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    userInput.addEventListener('input', function() {
+        this.style.height = '44px';
+        if (this.scrollHeight > 44) {
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        }
+    });
+
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        userInput.value = "";
+        userInput.style.height = '44px';
+        sendBtn.disabled = true;
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            if (data.status === "success") {
+                addMessage(data.response, false);
+            } else {
+                addMessage("Error: " + (data.error || "Unknown error"), false);
+            }
+        } catch (error) {
+            addMessage("Error connecting to server: " + error.message, false);
+        } finally {
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    userInput.addEventListener("keypress", function(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+</script>

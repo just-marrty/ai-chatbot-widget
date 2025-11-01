@@ -1,0 +1,13 @@
+*.pyc
+.env
+__pycache__/
+.venv/
+venv/
+*.log
+index.html.backup
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
